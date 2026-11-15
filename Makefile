@@ -1,7 +1,9 @@
 CC = cc
 CFLAGS = -Wall -Werror -Wextra -g
 
-MLX_FLAGS = -Lminilibx -lmlx -lXext -lX11 -lbsd
+MLX_DIR = minilibx
+MLX = $(MLX_DIR)/libmlx.a
+MLX_FLAGS = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm
 
 NAME = so_long
 
@@ -20,8 +22,15 @@ OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 all: $(NAME)
 
 # Link object files with libraries
-$(NAME): $(OBJS) $(LIBFT) $(PRINTF)
+$(NAME): $(MLX) $(OBJS) $(LIBFT) $(PRINTF)
 	$(CC) $(CFLAGS) $(OBJS) $(LIBFT) $(PRINTF) $(MLX_FLAGS) -o $(NAME)
+
+# Download and build MiniLibX if it is missing
+$(MLX_DIR):
+	git clone --depth 1 https://github.com/42Paris/minilibx-linux.git $(MLX_DIR)
+
+$(MLX): | $(MLX_DIR)
+	$(MAKE) -C $(MLX_DIR)
 
 # Build libft
 $(LIBFT):
@@ -32,9 +41,9 @@ $(PRINTF):
 	make -C $(PRINTF_DIR)
 
 # Create object directory and compile source files
-$(OBJ_DIR)/%.o: %.c
+$(OBJ_DIR)/%.o: %.c | $(MLX_DIR)
 	@mkdir -p $(OBJ_DIR)/get_next_line
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(MLX_DIR) -c $< -o $@
 
 # Clean up object files
 clean:
